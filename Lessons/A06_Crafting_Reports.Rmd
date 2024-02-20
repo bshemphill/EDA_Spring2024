@@ -1,9 +1,11 @@
 ---
-title: 'A06 - Crafting Reports'
-author: "Student Name" 
+title: 'BrookHemphill_A06_CraftingReports.Rmd'
+author: "Brook Hemphill" 
 date: "Spring 2024"
 output: pdf_document
+toc: true
 ---
+\listoftables
 
 ## Objectives:
 
@@ -27,7 +29,11 @@ Using markdown, create a table beneath the `Table: EPA Air Quality` line below t
 
 Table: EPA Air Quality
 
-
+Item Name  | Value
+------------- | -------------
+Source     | EPA Air Quality System
+Date  | 2018 - 2019
+Filename  | EPA Air Quality System (AQS)
 
 ---
 
@@ -35,9 +41,9 @@ Table: EPA Air Quality
 
 Set the following R code chunk so that it runs when knit, but no messages, errors, or any output is shown. The code itself, however, should be displayed.
 
-```{r project.setup}
+```{r project.setup, message=FALSE, warning=FALSE, echo=TRUE}
 #Import libraries
-library(tidyverse);library(lubridate);library(here);library(knitr)
+library(tidyverse);library(lubridate);library(here);library(knitr); library(ggplot2)
 
 #Import EPA data (from the processed_KEY folder) & fix dates
 epa_data <- read.csv(
@@ -45,6 +51,7 @@ epa_data <- read.csv(
   stringsAsFactors = TRUE) %>% 
   mutate(Date = ymd(Date))
 ```
+
 
 ---
 
@@ -61,7 +68,7 @@ Customize the chunk options such that the code is run but is not displayed in th
 > -   If your output table spans across two pages, try inserting a page break in the markdown just before your code chunk.
 
 
-```{r data.summary}
+```{r data.summary, echo=FALSE}
 #Compute mean PM2.5 concentration for each county, sorted by value
 summary_PM25 <- epa_data %>% 
   drop_na(PM2.5) %>% 
@@ -77,7 +84,16 @@ summary_Ozone <- epa_data %>%
     mean_Ozone = mean(Ozone)) %>% 
   arrange(mean_Ozone)
 
+
+```
+
+\newpage
+```{r}
 #Use the `kable` function to produce the 2 tables in markdown format
+
+knitr::kable(summary_PM25, caption = "Mean Particulates (2.5mm)", col.names = c("County", "$\\mu g/m^3$"))
+
+knitr::kable(summary_Ozone, caption = "Mean Ozone", col.names = c("County", "$\\mu g/m^3$"))
 
 ```
 
@@ -87,6 +103,34 @@ summary_Ozone <- epa_data %>%
 
 Create two separate code chunks that create boxplots of the distribution of Ozone levels by month using, one for only records collected in 2018 and one for records in 2019. Customize the chunk options such that the final figures are displayed but not the code used to generate the figures. In addition, align the plots on the left side of the page and set the figure heights so both plots fit on the same page with minimal space remaining. Lastly, add a `fig.cap` chunk option to add a caption (title) to your plot that will display underneath the figure.
 
+```{r echo=FALSE, warning=FALSE, fig.height=3, fig.width=5, fig.cap = "2018 Ozone values by month"}
+#months in integers to factors 
+epa_data$Month <- factor(epa_data$Month, levels = 1:12, labels = month.abb)
+# Filter data for records collected in 2018
+epa_data_2018 <- epa_data %>% filter(year(Date) == 2018)
+
+# Create boxplot of Ozone levels by month for 2018
+ggplot(epa_data_2018, aes(x = Month, y = Ozone)) +
+  geom_boxplot() +
+  labs(title = "Distribution of Ozone Levels by Month in 2018",
+       x = "Month",
+       y = "Ozone Levels (ppm)")
+
+```
+
+```{r echo=FALSE, warning=FALSE, fig.height=3, fig.width=5, fig.cap = "2019 Ozone values by month"}
+
+epa_data_2019 <- epa_data %>% filter(year(Date) == 2019)
+
+#create boxplot for 2019
+
+ggplot(epa_data_2019, aes(x = Month, y = Ozone)) +
+  geom_boxplot() + 
+  labs(title = "Distribution of Ozone Levels by Month in 2019",
+       x = "Month",
+       y = "Ozone Levels (ppm)")
+
+```
 
 
 ---
