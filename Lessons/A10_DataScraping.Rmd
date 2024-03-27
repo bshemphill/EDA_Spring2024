@@ -115,7 +115,7 @@ the_df <- data.frame("Year" = rep(2022,12),"Month" = Month,
 #modify the dataframe to create chronological order and object data
 
 the_df <- the_df %>% 
-  mutate(Date = my(paste(Month, "-", Year))
+  mutate(Date = my(paste(Month, "-", Year)))
 
 
 
@@ -124,7 +124,7 @@ max.daily.2022 <- ggplot(the_df, aes(x = Date, y = MaximumDayUse.MGD)) + geom_li
        subtitle = WaterSystemName,
        y="Withdrawal (mgd)",
        x="Date")
-plot(max.daily.2022) 
+print(max.daily.2022) 
 
 ```
 
@@ -132,31 +132,44 @@ plot(max.daily.2022)
 
 ```{r construct.a.scraping.function}
 #6. 
-the_base_url <- 'https://www.ncwater.org/WUDC/app/LWSP/report.php?pwsid=03-32-010&year=2022'
 the_PWSID <- '03-32-010'
 the_year <- 2022
-the_scrape_url <- paste0(the_base_url, '/', the_PWSID, '/', the_year)
+scrape.it <- function(the_year, the_PWSID){
+  the_base_url <- 'https://www.ncwater.org/WUDC/app/LWSP/report.php?pwsid='
+the_scrape_url <- paste0(the_base_url, the_PWSID, '&year=', the_year)
 print(the_scrape_url)
 
 #Retrieve the website contents 
-the_website2 <- read_html(the_scrape_url)
+the_website <- read_html(the_scrape_url)
 
 #Set the element address variables (determined in the previous step)
 WaterSystemName_tag <- 'div+ table tr:nth-child(1) td:nth-child(2)'
 the_PWSID_tag <- 'td tr:nth-child(1) td:nth-child(5)'
 the_Ownership_tag <- 'div+ table tr:nth-child(2) td:nth-child(4)'
 the_MGD_tag <- 'th~ td+ td'
-the_Month_tag <- '.fancy-table:nth-child(31) tr+ tr th'
+the_Month_tag <- '.fancy-table:nth-child(32) tr+ tr th'
 
 #Scrape the data items
 the_WaterSystemName.scrape <- the_website %>% html_nodes(WaterSystemName_tag) %>% html_text()
 the_PWSID_scrape <- the_website %>%   html_nodes(the_PWSID_tag) %>%  html_text()
 the_Ownership_scrape <- the_website %>% html_nodes(the_Ownership_tag) %>% html_text()
 the_MGD_scrape <- the_website %>% html_nodes(the_MGD_tag) %>% html_text()
+the_MGD_scrape
 the_Month_scrape <- the_website %>% html_nodes(the_Month_tag) %>% html_text()
 
+#construct a dataframe from the scraped data
+df_withdrawals <- data.frame("Month" = rep(1:12),
+                             "Year" = rep(the_year,12),
+                             "MGD" = as.numeric(MGD)) %>% 
+  mutate(WaterSystemName2 = !!the_WaterSystemName.scrape,
+         PWSID = !!the_PWSID_scrape,
+         Ownership2 = !!the_Ownership_scrape,
+         Date = my(paste(Month,"-",Year)))
+return(df_withdrawals)
+}
+scrape.it(2022,"03-32-010")
 
-```
+ ```
 
 7. Use the function above to extract and plot max daily withdrawals for Durham (PWSID='03-32-010') for each month in 2015
 
